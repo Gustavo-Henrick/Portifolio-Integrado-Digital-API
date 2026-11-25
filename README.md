@@ -50,3 +50,31 @@ Use o UUID retornado como `materia_id` ao enviar `POST /bimestres`:
 Os bimestres vão de 1 a 4 e o ano letivo de 2020 a 2026. O campo `conteudo` é opcional e pode ser limpo com `null` em uma atualização. A mesma matéria pode ter apenas um registro para cada combinação de ano e número do bimestre.
 
 As consultas e atualizações retornam 200, os cadastros retornam 201 e as exclusões retornam 204. Dados inválidos retornam 400, registros ausentes retornam 404 e conflitos de vínculo ou duplicidade retornam 409.
+
+## Capítulos, trabalhos, semestres e projetos
+
+| Rota base | Campos obrigatórios no cadastro | Campos opcionais | Filtros na listagem |
+| --- | --- | --- | --- |
+| `/capitulos` | `titulo`, `conteudo`, `bimestre_id` | `capitulo_numero` | `bimestre_id` |
+| `/trabalhos` | `titulo`, `conteudo`, `bimestre_id` | | `bimestre_id` |
+| `/semestres` | `numero_semestre` (1 ou 2), `ano` (2020 a 2026), `materia_id` | | `materia_id`, `ano` |
+| `/projetos` | `titulo`, `semestre_id` | `conteudo`, `descricao`, `link_github` | `semestre_id` |
+
+Use `POST` e `GET` na rota base para cadastrar e listar. Acrescente `/:id` para consultar (`GET`), atualizar campos (`PUT`) e excluir (`DELETE`). Use os UUIDs retornados pela API ao preencher os campos de vínculo.
+
+Os caminhos do planejamento `POST /bimestre/capitulo`, `POST /bimestre/trabalho` e `POST /semestre/projeto` também são aceitos. `/semestres/projetos` é um caminho alternativo para `/projetos`.
+
+Para consultar um capítulo por número, use `GET /bimestre/capitulo/1?bimestre_id=<uuid>`. Envie `capitulo_numero` ao cadastrar ou atualizar o capítulo para permitir essa consulta. O número é único por bimestre. Se o mesmo número existir em mais de um bimestre, a consulta sem `bimestre_id` retorna 409.
+
+Exemplo para `POST /projetos`:
+
+```json
+{
+  "titulo": "API do Portfólio",
+  "semestre_id": "550e8400-e29b-41d4-a716-446655440000",
+  "descricao": "API REST para organizar atividades escolares.",
+  "link_github": "https://github.com/aluno/portfolio"
+}
+```
+
+Cada matéria pode ter um registro por ano e número de semestre. A exclusão de matéria, bimestre ou semestre com registros vinculados retorna 409.

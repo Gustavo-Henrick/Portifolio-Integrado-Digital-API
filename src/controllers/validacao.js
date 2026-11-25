@@ -21,14 +21,14 @@ export function instituto(valor) {
   return valor;
 }
 
-function texto(valor, campo, limite) {
+export function texto(valor, campo, limite) {
   if (typeof valor !== "string" || !valor.trim() || Array.from(valor.trim()).length > limite) {
     invalido(campo, "Informe um texto válido e dentro do limite de tamanho.");
   }
   return valor.trim();
 }
 
-function inteiro(valor, campo, min, max) {
+export function inteiro(valor, campo, min, max) {
   if (!Number.isInteger(valor) || valor < min || valor > max) {
     invalido(campo, `Deve ser um inteiro de ${min} a ${max}.`);
   }
@@ -52,17 +52,11 @@ export function dadosBimestre(body, parcial) {
     ano,
     materia_id: (valor) => uuid(valor, "materia_id"),
   }, {
-    conteudo: (valor) => {
-      if (valor === null) return null;
-      if (typeof valor !== "string" || !valor.trim() || Buffer.byteLength(valor, "utf8") > 65_535) {
-        invalido("conteudo", "Informe um texto de até 65.535 bytes ou null.");
-      }
-      return valor;
-    },
+    conteudo: (valor) => textoLongo(valor, "conteudo", true),
   });
 }
 
-function validarCorpo(body, parcial, obrigatorios, opcionais = {}) {
+export function validarCorpo(body, parcial, obrigatorios, opcionais = {}) {
   if (!body || typeof body !== "object" || Array.isArray(body)) {
     invalido("body", "Envie um objeto JSON.");
   }
@@ -81,4 +75,23 @@ function validarCorpo(body, parcial, obrigatorios, opcionais = {}) {
     invalido("body", "Informe pelo menos um campo para atualizar.");
   }
   return dados;
+}
+
+export function textoLongo(valor, campo, aceitaNulo = false) {
+  if (aceitaNulo && valor === null) return null;
+  if (typeof valor !== "string" || !valor.trim() || Buffer.byteLength(valor, "utf8") > 65_535) {
+    invalido(campo, "Informe um texto de até 65.535 bytes.");
+  }
+  return valor;
+}
+
+export function linkGithub(valor) {
+  if (valor === null) return null;
+  const link = texto(valor, "link_github", 512);
+  const url = URL.canParse(link) ? new URL(link) : null;
+  if (!url || url.origin !== "https://github.com" || url.username || url.password ||
+      url.pathname.split("/").filter(Boolean).length < 2) {
+    invalido("link_github", "Informe a URL HTTPS de um repositório no GitHub.");
+  }
+  return link;
 }

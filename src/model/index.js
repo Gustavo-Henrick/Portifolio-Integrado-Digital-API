@@ -1,24 +1,23 @@
 import Materia from "./Materia.js";
 import Bimestre from "./Bimestre.js";
+import Semestre from "./Semestre.js";
+import { Capitulo, Projeto, Trabalho } from "./RegistrosPortfolio.js";
 
-Materia.hasMany(Bimestre, {
-  foreignKey: {
-    name: "materia_id",
-    allowNull: false,
-  },
-  as: "bimestres",
-  onUpdate: "CASCADE",
-  onDelete: "RESTRICT",
-});
+function vincular(pai, filho, plural, singular) {
+  const options = {
+    foreignKey: { name: singular + "_id", allowNull: false },
+    onUpdate: "CASCADE",
+    onDelete: "RESTRICT",
+  };
 
-Bimestre.belongsTo(Materia, {
-  foreignKey: {
-    name: "materia_id",
-    allowNull: false,
-  },
-  as: "materia",
-  onUpdate: "CASCADE",
-  onDelete: "RESTRICT",
-});
+  pai.hasMany(filho, { ...options, as: plural });
+  filho.belongsTo(pai, { ...options, as: singular });
+}
 
-export { Materia, Bimestre };
+vincular(Materia, Bimestre, "bimestres", "materia");
+vincular(Materia, Semestre, "semestres", "materia");
+vincular(Bimestre, Capitulo, "capitulos", "bimestre");
+vincular(Bimestre, Trabalho, "trabalhos", "bimestre");
+vincular(Semestre, Projeto, "projetos", "semestre");
+
+export { Materia, Bimestre, Semestre, Capitulo, Projeto, Trabalho };

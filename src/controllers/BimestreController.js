@@ -1,4 +1,4 @@
-import { Bimestre, Materia } from "../model/index.js";
+import { Bimestre, Capitulo, Materia, Trabalho } from "../model/index.js";
 import { ano, dadosBimestre, erro, uuid } from "./validacao.js";
 
 async function buscarBimestre(id) {
@@ -44,6 +44,10 @@ export async function atualizarBimestre(req, res) {
 
 export async function excluirBimestre(req, res) {
   const bimestre = await buscarBimestre(req.params.id);
+  const where = { bimestre_id: bimestre.id };
+  if (await Capitulo.count({ where }) || await Trabalho.count({ where })) {
+    throw erro(409, "O bimestre possui capítulos ou trabalhos vinculados.");
+  }
   await bimestre.destroy();
   res.sendStatus(204);
 }

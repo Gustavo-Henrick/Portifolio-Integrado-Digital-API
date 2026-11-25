@@ -1,4 +1,4 @@
-import { Bimestre, Materia } from "../model/index.js";
+import { Bimestre, Materia, Semestre } from "../model/index.js";
 import { dadosMateria, erro, instituto, uuid } from "./validacao.js";
 
 async function buscarMateria(id) {
@@ -31,6 +31,9 @@ export async function excluirMateria(req, res) {
   const materia = await buscarMateria(req.params.id);
   if (await Bimestre.count({ where: { materia_id: materia.id } })) {
     throw erro(409, "A matéria possui bimestres vinculados.");
+  }
+  if (await Semestre.count({ where: { materia_id: materia.id } })) {
+    throw erro(409, "A matéria possui semestres vinculados.");
   }
   await materia.destroy();
   res.sendStatus(204);

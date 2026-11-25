@@ -3,10 +3,13 @@ import { ForeignKeyConstraintError, UniqueConstraintError, ValidationError } fro
 import BimestreRouter from "./routes/BimestreRouter.js";
 import MateriaRouter from "./routes/MateriaRouter.js";
 
+import PortfolioRouter from "./routes/PortfolioRouter.js";
+
 const app = express();
 app.use(express.json({ limit: "512kb" }));
 app.use("/materias", MateriaRouter);
 app.use("/bimestres", BimestreRouter);
+app.use(PortfolioRouter);
 
 app.use((_req, res) => res.status(404).json({ message: "Rota não encontrada." }));
 
@@ -14,13 +17,18 @@ app.use((error, req, res, next) => {
   if (res.headersSent) return next(error);
 
   if (error instanceof UniqueConstraintError) {
-    return res.status(409).json({ message: "Já existe um bimestre com essa matéria, ano e número." });
+    const mensagens = {
+      bimestres: "Já existe um bimestre com essa matéria, ano e número.",
+      semestres: "Já existe um semestre com essa matéria, ano e número.",
+      capitulos: "Já existe um capítulo com esse número no bimestre.",
+    };
+    return res.status(409).json({ message: mensagens[req.path.split("/")[1]] || "Registro duplicado." });
   }
   if (error instanceof ForeignKeyConstraintError) {
     if (req.method === "DELETE") {
-      return res.status(409).json({ message: "A matéria possui bimestres vinculados." });
+      return res.status(409).json({ message: "O registro possui itens vinculados." });
     }
-    return res.status(404).json({ message: "Matéria não encontrada." });
+    return res.status(404).json({ message: "Registro vinculado não encontrado." });
   }
   if (error instanceof ValidationError) {
     return res.status(400).json({
