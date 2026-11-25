@@ -18,11 +18,13 @@ module.exports = (sequelize) => {
           isInt: true,
         },
       },
-      // O ano é guardado como número porque representa somente o ano letivo.
+      
       ano: {
         type: DataTypes.INTEGER,
         allowNull: false,
         validate: {
+          min: 2020,
+          max: 2026,
           isInt: true,
         },
       },
