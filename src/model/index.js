@@ -1,3 +1,4 @@
+import Usuario from "./Usuario.js";
 import Materia from "./Materia.js";
 import Bimestre from "./Bimestre.js";
 import Semestre from "./Semestre.js";
@@ -20,4 +21,4 @@ vincular(Bimestre, Capitulo, "capitulos", "bimestre");
 vincular(Bimestre, Trabalho, "trabalhos", "bimestre");
 vincular(Semestre, Projeto, "projetos", "semestre");
 
-export { Materia, Bimestre, Semestre, Capitulo, Projeto, Trabalho };
+export { Usuario, Materia, Bimestre, Semestre, Capitulo, Projeto, Trabalho };

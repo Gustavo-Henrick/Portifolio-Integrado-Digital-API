@@ -2,18 +2,24 @@
 
 API REST em Express e Sequelize 6 para registrar matérias do SESI e do SENAI e organizar atividades e reflexões por bimestre.
 
-## Executar localmente
+## Executar com o Supabase
 
-Com o MySQL em execução, crie o banco com `CREATE DATABASE IF NOT EXISTS portfolio_escolar CHARACTER SET utf8mb4;`. Na pasta do projeto, execute no PowerShell:
+O servidor Express se conecta ao PostgreSQL do Supabase com Sequelize. No painel do seu projeto, abra **Connect → Session pooler** e copie a URL da porta **5432**. Se você usa uma rede com IPv6, a opção **Direct connection** também funciona. [Guia de conexão do Supabase](https://supabase.com/docs/guides/database/connecting-to-postgres)
+
+Na pasta do projeto, execute:
 
 ```powershell
 npm install
-$env:DB_USER = 'root'
-$env:DB_PASSWORD = 'sua-senha'
-npm start
+Copy-Item .env.example .env
 ```
 
-A API usa a porta 3333 por padrão. As variáveis opcionais são `DB_HOST` (localhost), `DB_PORT` (3306), `DB_NAME` (portfolio_escolar) e `PORT` (3333). A primeira execução cria as tabelas no banco configurado. Para reiniciar automaticamente durante o desenvolvimento, use `npm run dev`.
+No arquivo `.env`, preencha `DATABASE_URL` com a URL do painel e substitua o marcador de senha pela senha do banco. Se a senha tiver caracteres reservados, codifique-os na URL. Por exemplo, use `%40` para `@` e `%23` para `#`. Mantenha a URL no ambiente do servidor.
+
+A conexão usa TLS com validação do certificado. Se precisar informar a CA, baixe o certificado em **Database Settings** e configure `DB_SSL_CA_PATH` com o caminho do arquivo. Use `DB_SSL=false` somente para um PostgreSQL de teste local sem TLS. [Certificados do Supabase](https://supabase.com/docs/guides/database/psql)
+
+Execute `npm start` para iniciar a API na porta 3333. A primeira execução cria o esquema `portfolio_escolar` e suas tabelas no Supabase. O usuário do banco precisa ter permissão para criá-los. O Express continua sendo executado onde você rodar a API. Para alterar a porta, configure `PORT`. Para reiniciar o servidor automaticamente durante o desenvolvimento, use `npm run dev`.
+
+Registros de um banco MySQL anterior exigem uma migração de dados própria.
 
 ## Endpoints
 
@@ -78,3 +84,48 @@ Exemplo para `POST /projetos`:
 ```
 
 Cada matéria pode ter um registro por ano e número de semestre. A exclusão de matéria, bimestre ou semestre com registros vinculados retorna 409.
+
+## Cadastro de usuários
+
+Envie um JSON para POST /usuarios com nome, email e senha (mínimo de 8 caracteres).
+
+    {"nome":"Aluno","email":"aluno@example.com","senha":"senha-de-exemplo"}
+
+A resposta HTTP 201 contém id, nome e email. E-mails são normalizados para minúsculas e um cadastro duplicado retorna 409. A senha é armazenada somente como hash com salt. Esta rota faz o cadastro. Sessões e login dependem de uma implementação própria.
+
+## Portfólio individual do SESI
+
+Cadastre cada área do conhecimento em /materias com instituto SESI. Use o UUID da área nas rotas de conteúdo anual e nos bimestres. Para a identificação do aluno, o nome vem do cadastro em /usuarios. O conteúdo anual registra também série, turma, itinerário e reflexão pessoal.
+
+### Seções anuais
+
+Use GET /materias/:id/portfolio/:ano para ler e PUT no mesmo caminho para editar. O PUT atualiza apenas os campos enviados e preserva os demais campos e anos. Um ano sem conteúdo retorna conteudo como objeto vazio.
+
+```json
+{
+  "quem_sou_eu": {
+    "serie": "3º ano",
+    "turma": "G",
+    "itinerario_formativo": "Tecnologia",
+    "reflexao_pessoal": "Quero melhorar minha escrita científica."
+  },
+  "reflexao_critica": {
+    "aprendizado_academico": "Aprendi a interpretar dados.",
+    "aplicacao_pratica": "Usei gráficos para comparar resultados.",
+    "pontos_a_melhorar": "Preciso explicar melhor minhas conclusões."
+  },
+  "conexoes_interdisciplinares": "Usei matemática para analisar um experimento de ciências.",
+  "aprendizados_para_a_vida": {
+    "experiencias": "Aprendi a dividir tarefas em grupo.",
+    "aplicacao_dos_conhecimentos": "Posso aplicar isso em projetos futuros."
+  }
+}
+```
+
+### Seções bimestrais
+
+- **Fundamentos teóricos**. Cadastre resumos em /capitulos e filtre a lista por bimestre_id.
+- **Participação em sala de aula**. No POST /bimestres ou PUT /bimestres/:id, envie participacao com registro_atividades, reflexao_pratica e autoavaliacao. Ao enviar participacao em um PUT, o objeto substitui a versão anterior. Para apagar esse bloco, envie null. O campo conteudo continua aceitando texto.
+- **Projetos e trabalhos desenvolvidos**. No POST /trabalhos ou PUT /trabalhos/:id, envie evidencias como uma lista de URLs de imagens, vídeos ou documentos. Uma lista vazia remove os links. Os arquivos são hospedados fora da API.
+
+As rotas de semestres e projetos continuam disponíveis para o SENAI.

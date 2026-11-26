@@ -14,6 +14,7 @@ const Bimestre = conn.define("Bimestre", {
     validate: { isInt: true, min: 2020, max: 2026 },
   },
   materia_id: { type: DataTypes.UUID, allowNull: false },
+  participacao: { type: DataTypes.JSONB, allowNull: true },
   conteudo: { type: DataTypes.TEXT, allowNull: true },
 }, {
   tableName: "bimestres",

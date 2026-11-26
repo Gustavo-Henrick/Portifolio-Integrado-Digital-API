@@ -1,3 +1,4 @@
+import UsuarioRouter from "./routes/UsuarioRouter.js";
 import express from "express";
 import { ForeignKeyConstraintError, UniqueConstraintError, ValidationError } from "sequelize";
 import BimestreRouter from "./routes/BimestreRouter.js";
@@ -7,6 +8,7 @@ import PortfolioRouter from "./routes/PortfolioRouter.js";
 
 const app = express();
 app.use(express.json({ limit: "512kb" }));
+app.use("/usuarios", UsuarioRouter);
 app.use("/materias", MateriaRouter);
 app.use("/bimestres", BimestreRouter);
 app.use(PortfolioRouter);
@@ -18,6 +20,7 @@ app.use((error, req, res, next) => {
 
   if (error instanceof UniqueConstraintError) {
     const mensagens = {
+      usuarios: "Já existe um usuário com esse e-mail.",
       bimestres: "Já existe um bimestre com essa matéria, ano e número.",
       semestres: "Já existe um semestre com essa matéria, ano e número.",
       capitulos: "Já existe um capítulo com esse número no bimestre.",
@@ -47,7 +50,11 @@ app.use((error, req, res, next) => {
     return res.status(error.status).json({ message: error.message, details: error.details });
   }
 
-  console.error(error);
+  if (req.path.split("/")[1] === "usuarios") {
+    console.error("Falha no cadastro de usuário:", error.name);
+  } else {
+    console.error(error);
+  }
   return res.status(500).json({ message: "Erro interno do servidor." });
 });
 

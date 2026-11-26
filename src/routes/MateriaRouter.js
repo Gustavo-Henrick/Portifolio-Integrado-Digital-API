@@ -7,7 +7,10 @@ import {
   excluirMateria,
 } from "../controllers/MateriaController.js";
 
+import { atualizarConteudoAnual, consultarConteudoAnual } from "../controllers/ConteudoAnualController.js";
+
 const router = Router();
+router.route("/:id/portfolio/:ano").get(consultarConteudoAnual).put(atualizarConteudoAnual);
 router.post("/", criarMateria);
 router.get("/", listarMaterias);
 router.get("/:id", consultarMateria);

@@ -53,6 +53,11 @@ export function dadosBimestre(body, parcial) {
     materia_id: (valor) => uuid(valor, "materia_id"),
   }, {
     conteudo: (valor) => textoLongo(valor, "conteudo", true),
+    participacao: (valor) => valor === null ? null : validarCorpo(valor, true, {
+      registro_atividades: (item) => textoLongo(item, "registro_atividades"),
+      reflexao_pratica: (item) => textoLongo(item, "reflexao_pratica"),
+      autoavaliacao: (item) => textoLongo(item, "autoavaliacao"),
+    }),
   });
 }
 
@@ -94,4 +99,18 @@ export function linkGithub(valor) {
     invalido("link_github", "Informe a URL HTTPS de um repositório no GitHub.");
   }
   return link;
+}
+
+export function linksDeEvidencias(valor) {
+  if (!Array.isArray(valor) || valor.length > 20) {
+    invalido("evidencias", "Envie uma lista com até 20 links.");
+  }
+  return valor.map((item) => {
+    const link = texto(item, "evidencias", 2048);
+    const url = URL.canParse(link) ? new URL(link) : null;
+    if (!url || !["https:", "http:"].includes(url.protocol) || url.username || url.password) {
+      invalido("evidencias", "Cada evidência deve ser um link HTTP ou HTTPS válido.");
+    }
+    return url.href;
+  });
 }
